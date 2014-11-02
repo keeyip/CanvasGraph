@@ -1,4 +1,1 @@
-CanvasGraph
-===========
-
-Graph-drawing using Canvas for edges, CSS for layout
+![Screenshot](screenshot.png)

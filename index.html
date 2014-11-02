@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset='utf-8'/>
+        <link rel='stylesheet' href='CanvasGraph.css'/>
+        <style>
+#graph1, #graph2 {
+            margin: 20px;
+        }
+#graph2 .CanvasGraph {
+            height: 400px;
+        }
+        </style>
+    </head>
+    <body>
+        <button type="button" id="redrawEdges">#redrawEdges</button>
+        <button type="button" id="setRoots">#setRoots</button>
+        <button type="button" id="destroy">#destroy</button>
+
+        <h2>Dynamic width/height</h2>
+        <div id="graph1"></div>
+
+        <h2>Fixed-height</h2>
+        <div id="graph2"></div>
+
+        <script src='CanvasGraph.js'></script>
+        <script>
+            ;(function() {
+            var c1 = CanvasGraph([
+                    { nodeLabel:'FancyLabel', nodeId:'A', children: [ { property: ':b', propertyLabel:':bFancy', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', nodeId: 'E' }, ] }, { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'Y2', children: [ { property: ':c', nodeId: 'C', children:[{property:':cz',target:'D1'}] } ] },
+                    { nodeId:'D', },
+                    { nodeId:'Z', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, ] }, { property: ':z', target: 'A' }, ] },
+                    { nodeId:'Y1', children: [ { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'A1', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', nodeId: 'E' }, ] }, { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'D1'},
+            ], document.querySelector('#graph1'));
+            var c2 = CanvasGraph([
+                    { nodeId:'A', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', nodeId: 'E' }, ] }, { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'Y2', children: [ { property: ':c', nodeId: 'C', children:[{property:':cz',target:'D1'}] } ] },
+                    { nodeId:'D', },
+                    { nodeId:'Z', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, ] }, { property: ':z', target: 'A' }, ] },
+                    { nodeId:'Y1', children: [ { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'A1', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', nodeId: 'E' }, ] }, { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'D1'},
+            ], document.querySelector('#graph2'));
+
+            document.querySelector('#redrawEdges').onclick = function() {
+                c1.redrawEdges();
+                c2.redrawEdges();
+            };
+            document.querySelector('#destroy').onclick = function() {
+                c1.destroy();
+                c2.destroy();
+            };
+            document.querySelector('#setRoots').onclick = function() {
+                c1.setRoots([
+                    { nodeId:'A', children: [ { property: ':b', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', nodeId: 'E' }, ] }, { property: ':c', nodeId: 'C' } ] },
+                    { nodeId:'Y2', children: [ { property: ':c', nodeId: 'C', children:[{property:':cz',target:'D1'}] } ] },
+                    { nodeId:'D1', },
+                    { nodeId:'D', },
+                ]);
+                c2.setRoots([
+                    { nodeId:'A', children: [ { property: ':b-2-12-12-21-', nodeId: 'B', children: [ { property: ':d', target: 'D' }, { property: ':e', target:'A', nodeId: 'E' }, ] }, { property: ':cwef-wef-wef-we-f-ef', target:'A', nodeId: 'C' } ] },
+                    { nodeId:'Y2', children: [ { property: ':c', nodeId: 'C', children:[{property:':cz',target:'D1'}] } ] },
+                    { nodeId:'D', },
+                    { nodeId:'D1', },
+                ]);
+            };
+            })();
+        </script>
+    </body>
+</html>
