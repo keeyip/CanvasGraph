@@ -12,69 +12,62 @@
             ], document.body);
     */
     def(function CanvasGraph(roots, container) {
-        var canvasGraphEl = document.createElement('div');
-        canvasGraphEl.className = 'CanvasGraph';
-        var nodesEl = document.createElement('div');
-        nodesEl.className = 'CanvasGraph-nodes-container';
-        canvasGraphEl.appendChild(nodesEl);
-        var edgesEl = document.createElement('div');
-        edgesEl.className = 'CanvasGraph-edges-container';
-        canvasGraphEl.appendChild(edgesEl);
+        var nodesEl = divEl('CanvasGraph-nodes-container');
+        var edgesEl = divEl('CanvasGraph-edges-container');
+        var canvasGraphEl = divEl('CanvasGraph', nodesEl, edgesEl);
         container.appendChild(canvasGraphEl);
 
         var targetLookup, sourceEls;
 
         var renderNodes = (function() {
+            function div(spec /*, .. rest .. */) {
+                if (typeof spec === 'string') {
+                    return '<div class="'+spec+'">' + rest(arguments).join('') + '</div>';
+                } else {
+                    return '<div data-CanvasGraph-node-id="'+spec.nodeId+'" data-CanvasGraph-target="'+(spec.target||'')+'" class="'+spec.className+'">' + rest(arguments).join('') + '</div>';
+                }
+            }
+            function safe(s) {
+                if (!s) return '';
+                return s.replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+            }
+            function renderNode(node) {
+                if (node.property) {
+                    var propertyValue = '';
+                    if (node.nodeId) {
+                        propertyValue = div('CanvasGraph-property-value',
+                                            div({className:'CanvasGraph-node', nodeId:node.nodeId},
+                                                div('CanvasGraph-node-header',
+                                                    div('CanvasGraph-node-label', safe(node.nodeLabel || node.nodeId))),
+                                                node.children ? node.children.map(renderNode).join('') : ''));
+                    }
+                    return div('CanvasGraph-property',
+                               div('CanvasGraph-property-header',
+                               div({className:'CanvasGraph-property-label', nodeId:node.property, target:node.target}, safe(node.propertyLabel || node.property))),
+                               propertyValue);
+                } else {
+                    return div({className:'CanvasGraph-node',nodeId:node.nodeId},
+                               div('CanvasGraph-node-header',
+                                   div('CanvasGraph-node-label', safe(node.nodeLabel || node.nodeId))),
+                               node.children ? node.children.map(renderNode).join('') : '');
+                }
+            }
+            function indexTargets() {
+                var sources = nodesEl.querySelectorAll('[data-CanvasGraph-target]')
+                sourceEls = [];
+                targetLookup = {};
+                var target;
+                for (var i=0, n=sources.length; i < n; i++) {
+                    target = sources[i].getAttribute('data-CanvasGraph-target')
+                    if (target) {
+                        sourceEls.push(sources[i]);
+                        targetLookup[target] = nodesEl.querySelector('[data-CanvasGraph-node-id="'+target+'"]')
+                    }
+                }
+            }
             return function() {
-                function rest(list) {
-                    return Array.prototype.slice.call(list, 1);
-                }
-                function div(spec /*, .. rest .. */) {
-                    if (typeof spec === 'string') {
-                        return '<div class="'+spec+'">' + rest(arguments).join('') + '</div>';
-                    } else {
-                        return '<div data-CanvasGraph-node-id="'+spec.nodeId+'" data-CanvasGraph-target="'+(spec.target||'')+'" class="'+spec.className+'">' + rest(arguments).join('') + '</div>';
-                    }
-                }
-                function safe(s) {
-                    if (!s) return '';
-                    return s.replace(/&/g, '&amp;')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;');
-                }
-                function renderNode(node) {
-                    if (node.property) {
-                        var propertyValue = '';
-                        if (node.nodeId) {
-                            propertyValue = div('CanvasGraph-property-value',
-                                                div({className:'CanvasGraph-node', nodeId:node.nodeId},
-                                                    div('CanvasGraph-node-header',
-                                                        div('CanvasGraph-node-label', safe(node.nodeLabel || node.nodeId))),
-                                                    node.children ? node.children.map(renderNode).join('') : ''));
-                        }
-                        return div('CanvasGraph-property',
-                                   div('CanvasGraph-property-header', div({className:'CanvasGraph-property-label', nodeId:node.property, target:node.target}, safe(node.propertyLabel || node.property))),
-                                   propertyValue);
-                    } else {
-                        return div({className:'CanvasGraph-node',nodeId:node.nodeId},
-                                   div('CanvasGraph-node-header',
-                                       div('CanvasGraph-node-label', safe(node.nodeLabel || node.nodeId))),
-                                   node.children ? node.children.map(renderNode).join('') : '');
-                    }
-                }
-                function indexTargets() {
-                    var sources = nodesEl.querySelectorAll('[data-CanvasGraph-target]')
-                    sourceEls = [];
-                    targetLookup = {};
-                    var to;
-                    for (var i=0, n=sources.length; i < n; i++) {
-                        to = sources[i].getAttribute('data-CanvasGraph-target')
-                        if (to) {
-                            sourceEls.push(sources[i]);
-                            targetLookup[to] = nodesEl.querySelector('[data-CanvasGraph-node-id="'+to+'"]')
-                        }
-                    }
-                }
                 var finalHtml = roots.map(renderNode).join('');
                 finalHtml += div('CanvasGraph-clear-float');
                 nodesEl.innerHTML = finalHtml;
@@ -83,23 +76,17 @@
         })();
         var renderEdges = (function() {
             function getPos(el) {
-                var x = 0;
-                var y = 0;
+                var x = 0, y = 0;
                 for (; el && el != nodesEl; el = el.offsetParent) {
                     x += el.offsetLeft
                     y += el.offsetTop
                 }
                 x -= canvasGraphEl.scrollLeft
                 y -= canvasGraphEl.scrollTop
-                return {
-                    x:x,
-                    y:y
-                }
+                return { x:x, y:y }
             }
             function sq(x) { return x*x }
-            function distance(pA, pB) {
-                return Math.sqrt(sq(pB.x-pA.x) + sq(pB.y-pA.y));
-            }
+            function distance(pA, pB) { return Math.sqrt(sq(pB.x-pA.x) + sq(pB.y-pA.y)); }
             function drawEdge(pA,pB, gfx) {
                 var x1 = pA.x - 30;
                 var y1 = (pA.y <= pB.y) ? pA.y + 100 : pA.y - 50;
@@ -156,7 +143,6 @@
                 edgesEl.style.top = canvasGraphEl.scrollTop + 'px';
                 edgesEl.style.left = canvasGraphEl.scrollLeft + 'px';
                 var gfx = canvasEl.getContext('2d');
-                gfx.clearRect(0,0, canvasEl.width, canvasEl.height);
                 sourceEls.forEach(function(sourceEl) {
                     var target = sourceEl.getAttribute('data-CanvasGraph-target');
                     var targetEl = targetLookup[target];
@@ -197,4 +183,16 @@
             }
         };
     });
+
+    function rest(list) {
+        return Array.prototype.slice.call(list, 1);
+    }
+    function divEl(className/*, .. rest .. */) {
+        var el = document.createElement('div');
+        el.className = className;
+        rest(arguments).forEach(function(childEl) {
+            el.appendChild(childEl);
+        });
+        return el;
+    }
 })(typeof window.define === 'function' ? window.define : function(api) { window.CanvasGraph = api });
